@@ -211,7 +211,9 @@ static void schedule_window_load(Window *window) {
 }
 
 static void schedule_window_unload(Window *window) {
+	// Zero out the entire buffer, ensuring a clean next use of it.
 	memset(buffer, 0x00, sizeof buffer);
+
 	simple_menu_layer_destroy(sched_layer);
 }
 
