@@ -16,7 +16,10 @@ static SimpleMenuSection stn_sections[1], dir_sections[1], sched_sections[1];
 static char buffer[MAX_BUFFER_SIZE];
 
 static char from_station[STN_NAME_LEN];
-static char *delim = ";";
+
+static const char *delim = ";";
+
+static char *schedule_title_text;
 
 enum {
 	PATH_STN_KEY = 0x0,
@@ -125,6 +128,7 @@ static void stn_callback(int index, void *ctx) {
 static void populate_menu() {
 	size_t n, len;
 	char *t, *dest;
+	char *title_prefix = "From ";
 
 	len = strlen(buffer);
 	sched_num_items = 0;
@@ -148,8 +152,16 @@ static void populate_menu() {
 		};
 	}
 
+	schedule_title_text = calloc(1, strlen(title_prefix) + strlen(from_station) + 1);
+	if (!schedule_title_text) {
+		return;
+	}
+
+	strncat(schedule_title_text, title_prefix, strlen(title_prefix));
+	strncat(schedule_title_text, from_station, strlen(from_station));
+
 	sched_sections[0] = (SimpleMenuSection) {
-		.title = from_station,
+		.title = schedule_title_text,
 		.num_items = sched_num_items,
 		.items = sched_items,
 	};
@@ -209,6 +221,9 @@ static void schedule_window_load(Window *window) {
 static void schedule_window_unload(Window *window) {
 	// Zero out the entire buffer, ensuring a clean next use of it.
 	memset(buffer, 0x00, sizeof buffer);
+
+	// Clear the section title of schedule window.
+	free(schedule_title_text);
 
 	simple_menu_layer_destroy(sched_layer);
 }
