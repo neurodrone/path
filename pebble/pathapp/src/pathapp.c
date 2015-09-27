@@ -49,22 +49,21 @@ static struct direction directions[] = {
 
 static void send_to_phone(int key, const char *direction) {
 	DictionaryIterator *iter;
-	char *buf;
+	char *bufptr;
 
 	app_message_outbox_begin(&iter);
 	if (!iter) {
 		return;
 	}
 
-	buf = buffer;
-	memcpy(buf, from_station, strlen(from_station));
-	buf += strlen(from_station);
-	memcpy(buf, delim, strlen(delim));
-	buf += strlen(delim);
-	strncpy(buf, direction, strlen(direction));
+	bufptr = buffer;
+	memcpy(bufptr, from_station, strlen(from_station));
+	bufptr += strlen(from_station);
+	memcpy(bufptr, delim, strlen(delim));
+	bufptr += strlen(delim);
+	strncpy(bufptr, direction, strlen(direction));
 
-	buf = buffer;
-	Tuplet tuplet = TupletCString(key, buf);
+	Tuplet tuplet = TupletCString(key, buffer);
 	dict_write_tuplet(iter, &tuplet);
 
 	dict_write_end(iter);
