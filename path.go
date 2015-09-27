@@ -149,12 +149,17 @@ func (p *Path) GrabTimes(w http.ResponseWriter, r *http.Request) {
 	dur := make([]string, 0, len(times))
 	for _, t := range times {
 		tt, _ := time.Parse(timeFormat, t)
-		dur = append(dur, strconv.Itoa(int(tt.Sub(curTime).Minutes())))
+
+		timeDiff := tt.Sub(curTime)
+		if tt.Before(curTime) {
+			timeDiff = tt.Add(24 * time.Hour).Sub(curTime)
+		}
+		dur = append(dur, strconv.Itoa(int(timeDiff.Minutes())))
 	}
 
 	var buf bytes.Buffer
 	for i := 0; i < len(times); i++ {
-		buf.WriteString(fmt.Sprintf("%s,%s;", times[i], dur[i]))
+		buf.WriteString(fmt.Sprintf("%s,%s mins left;", times[i], dur[i]))
 	}
 
 	w.Write(buf.Bytes())

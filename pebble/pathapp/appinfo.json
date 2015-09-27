@@ -1,0 +1,25 @@
+{
+  "uuid": "8ea6430c-22ba-4b61-b6fc-f1e764933b8e",
+  "shortName": "Path",
+  "longName": "Path App",
+  "companyName": "KB Inc.",
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["aplite", "basalt"],
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "sched": 0
+  },
+  "resources": {
+    "media": [
+	{
+	    "menuIcon": true,
+	    "type": "png",
+	    "name": "IMAGE_ICON",
+	    "file": "path_dithered.png"
+	}
+    ]
+  }
+}
