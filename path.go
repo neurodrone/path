@@ -19,6 +19,10 @@ const (
 
 	// timeFormat gives the format of input and output time variables.
 	timeFormat = "3:04PM"
+
+	// HTTPErrPrefix is used to prefix all errors so that they are
+	// easily recognizable when read by an embedded device.
+	HTTPErrPrefix = "error: "
 )
 
 var (
@@ -70,19 +74,19 @@ func New(limit int) (*Path, error) {
 func (p *Path) ListStations(w http.ResponseWriter, r *http.Request) {
 	direction := mux.Vars(r)["direction"]
 	if direction == "" {
-		http.Error(w, "'direction' cannot be empty", http.StatusBadRequest)
+		http.Error(w, HTTPErrPrefix+"'direction' cannot be empty", http.StatusBadRequest)
 		return
 	}
 
 	endURLStub, ok := destMap[direction]
 	if !ok {
-		http.Error(w, fmt.Sprintf("unable to find loc: %q", direction), http.StatusInternalServerError)
+		http.Error(w, HTTPErrPrefix+fmt.Sprintf("unable to find loc: %q", direction), http.StatusInternalServerError)
 		return
 	}
 
 	stations, _, err := p.pullSchedule(endURLStub)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, HTTPErrPrefix+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -96,61 +100,66 @@ func (p *Path) ListStations(w http.ResponseWriter, r *http.Request) {
 func (p *Path) GrabTimes(w http.ResponseWriter, r *http.Request) {
 	stn := mux.Vars(r)["stn"]
 	if stn == "" {
-		http.Error(w, "'stn' cannot be empty", http.StatusBadRequest)
+		http.Error(w, HTTPErrPrefix+"'stn' cannot be empty", http.StatusBadRequest)
 		return
 	}
 
 	direction := mux.Vars(r)["direction"]
 	if direction == "" {
-		http.Error(w, "'direction' cannot be empty", http.StatusBadRequest)
+		http.Error(w, HTTPErrPrefix+"'direction' cannot be empty", http.StatusBadRequest)
 		return
 	}
 
 	tyme := mux.Vars(r)["time"]
 	if tyme == "" {
-		http.Error(w, "'time' cannot be empty", http.StatusBadRequest)
+		http.Error(w, HTTPErrPrefix+"'time' cannot be empty", http.StatusBadRequest)
 		return
 	}
 
 	endURLStub, ok := destMap[direction]
 	if !ok {
-		http.Error(w, fmt.Sprintf("unable to find loc: %q", direction), http.StatusInternalServerError)
+		http.Error(w, HTTPErrPrefix+fmt.Sprintf("unable to find loc: %q", direction), http.StatusInternalServerError)
 		return
 	}
 
 	_, stationMap, err := p.pullSchedule(endURLStub)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, HTTPErrPrefix+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	times, ok := stationMap[stn]
 	if !ok {
-		http.Error(w, fmt.Sprintf("invalid stn: %q", stn), http.StatusBadRequest)
+		http.Error(w, HTTPErrPrefix+fmt.Sprintf("invalid stn: %q", stn), http.StatusBadRequest)
 		return
 	}
 
 	curTime, err := time.Parse(timeFormat, tyme)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("invalid 'time': %s", err), http.StatusBadRequest)
+		http.Error(w, HTTPErrPrefix+fmt.Sprintf("invalid 'time': %s", err), http.StatusBadRequest)
 		return
 	}
 
 	times, err = p.getNextTimes(times, curTime, p.timesLimit)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, HTTPErrPrefix+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	dur := make([]string, 0, len(times))
 	for _, t := range times {
 		tt, _ := time.Parse(timeFormat, t)
-		dur = append(dur, strconv.Itoa(int(tt.Sub(curTime).Minutes())))
+
+		timeDiff := tt.Sub(curTime)
+		if tt.Before(curTime) {
+			timeDiff = tt.Add(24 * time.Hour).Sub(curTime)
+		}
+		dur = append(dur, strconv.Itoa(int(timeDiff.Minutes())))
 	}
 
 	var buf bytes.Buffer
 	for i := 0; i < len(times); i++ {
-		buf.WriteString(fmt.Sprintf("%s,%s;", times[i], dur[i]))
+		buf.WriteString(fmt.Sprintf("%s,%s mins left;", times[i], dur[i]))
 	}
 
 	w.Write(buf.Bytes())
