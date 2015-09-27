@@ -43,8 +43,8 @@ struct direction {
 };
 
 static struct direction directions[] = {
-	{ .title = "JSQ to 33rd", .stub = "jsq_33rd" },
-	{ .title = "33rd to JSQ", .stub = "33rd_jsq" },
+	{ .title = "To 33rd St", .stub = "jsq_33rd" },
+	{ .title = "To JSQ", .stub = "33rd_jsq" },
 };
 
 static void send_to_phone(int key, const char *direction) {
