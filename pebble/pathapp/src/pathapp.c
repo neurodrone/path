@@ -1,6 +1,6 @@
 #include "pebble.h"
 
-#define MAXBUFFERSIZE 200
+#define MAX_BUFFER_SIZE 200
 #define MAX_SCHED_ITEMS 10
 #define MAX_STN_ITEMS 20
 #define MAX_DIR_ITEMS 5
@@ -13,7 +13,7 @@ static SimpleMenuLayer *stn_layer, *dir_layer, *sched_layer;
 static SimpleMenuItem stn_items[MAX_STN_ITEMS], dir_items[MAX_DIR_ITEMS], sched_items[MAX_SCHED_ITEMS];
 static SimpleMenuSection stn_sections[1], dir_sections[1], sched_sections[1];
 
-static char buffer[MAXBUFFERSIZE];
+static char buffer[MAX_BUFFER_SIZE];
 
 static char from_station[STN_NAME_LEN];
 static char *delim = ";";
@@ -63,7 +63,8 @@ static void send_to_phone(int key, const char *direction) {
 	bufptr += strlen(delim);
 	strncpy(bufptr, direction, strlen(direction));
 
-	Tuplet tuplet = TupletCString(key, buffer);
+	bufptr = buffer;
+	Tuplet tuplet = TupletCString(key, bufptr);
 	dict_write_tuplet(iter, &tuplet);
 
 	dict_write_end(iter);
@@ -80,12 +81,6 @@ static void sched_menu_callback(int index, void *ctx) {
 	sched_items[index].subtitle = "Ok. Now hurry!";
 	layer_mark_dirty(simple_menu_layer_get_layer(sched_layer));
 }
-
-/*
-static void stn_callback(int index, void *ctx) {
-	send_to_phone(PATH_STN_KEY, stn_names[index]);
-}
-*/
 
 static void dir_callback(int index, void *ctx) {
 	send_to_phone(PATH_STN_KEY, directions[index].stub);
@@ -154,6 +149,7 @@ static void populate_menu() {
 	}
 
 	sched_sections[0] = (SimpleMenuSection) {
+		.title = from_station,
 		.num_items = sched_num_items,
 		.items = sched_items,
 	};
@@ -240,7 +236,7 @@ static void out_failed_handler(
 static void init() {
 	uint32_t inbound_buffer, outbound_buffer;
 
-	inbound_buffer = outbound_buffer = MAXBUFFERSIZE;
+	inbound_buffer = outbound_buffer = MAX_BUFFER_SIZE;
 	app_message_open(inbound_buffer, outbound_buffer);
 
 	app_message_register_inbox_received(in_received_handler);
