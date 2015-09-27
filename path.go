@@ -29,8 +29,12 @@ var (
 	// destMap translates the given direction into the page path
 	// at which the schedule for a train route is available.
 	destMap = map[string]string{
-		"jsq_33rd": "JSQ_33rd_Weekday",
-		"33rd_jsq": "33rd_JSQ_Weekday",
+		"jsq_33rd_weekday":  "JSQ_33rd_Weekday",
+		"jsq_33rd_saturday": "JSQ_33rd_Sat_PTC",
+		"jsq_33rd_sunday":   "JSQ_33rd_via_HOB_Sun_Hol_PTC",
+		"33rd_jsq_weekday":  "33rd_JSQ_Weekday",
+		"33rd_jsq_saturday": "33rd_JSQ_Sat_PTC",
+		"33rd_jsq_sunday":   "33rd_JSQ_via_HOB_Sun_Hol_PTC",
 	}
 
 	// ErrInvalidLimit is called when no. of timings that are demanded
@@ -78,7 +82,7 @@ func (p *Path) ListStations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	endURLStub, ok := destMap[direction]
+	endURLStub, ok := destMap[p.weekdaySuffix(direction)]
 	if !ok {
 		http.Error(w, HTTPErrPrefix+fmt.Sprintf("unable to find loc: %q", direction), http.StatusInternalServerError)
 		return
@@ -116,7 +120,7 @@ func (p *Path) GrabTimes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	endURLStub, ok := destMap[direction]
+	endURLStub, ok := destMap[p.weekdaySuffix(direction)]
 	if !ok {
 		http.Error(w, HTTPErrPrefix+fmt.Sprintf("unable to find loc: %q", direction), http.StatusInternalServerError)
 		return
@@ -163,4 +167,16 @@ func (p *Path) GrabTimes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(buf.Bytes())
+}
+
+func (p *Path) weekdaySuffix(direction string) string {
+	weekday := strings.ToLower(time.Now().Weekday().String())
+
+	switch weekday {
+	case "saturday", "sunday":
+		return direction + "_" + weekday
+	default:
+		return direction + "_weekday"
+	}
+	return ""
 }
