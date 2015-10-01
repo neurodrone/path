@@ -137,13 +137,13 @@ static void populate_menu() {
 	while (n < len) {
 		t = (char *)&buffer[n];
 
-		while (buffer[n++] != ',');
-		buffer[n - 1] = '\0';
+		while (buffer[n] != ',') n++;
+		buffer[n++] = '\0';
 
 		dest = (char *)&buffer[n];
 
-		while (buffer[n++] != ';');
-		buffer[n - 1] = '\0';
+		while (buffer[n] != ';') n++;
+		buffer[n++] = '\0';
 
 		sched_items[sched_num_items++] = (SimpleMenuItem) {
 			.title = t,
